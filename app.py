@@ -16,7 +16,7 @@ class OBD2Dashboard:
         self.root.bind('<Escape>', lambda e: root.quit())
 
         # Queue for receiving data from OBD reader thread
-        self.data_queue = queue.Queue()
+        self.data_queue = queue.Queue(maxsize=1)
 
         # Load initial sample data
         with open('sample.json', 'r') as f:
@@ -46,7 +46,7 @@ class OBD2Dashboard:
         # Header info (ELM Version and Runtime)
         elm_version = self.current_data.get('ELM_VERSION', {}).get('value', 'N/A')
         run_time = self.current_data.get('RUN_TIME', {}).get('value', '0 second')
-
+        run_time = time.strftime('%H:%M:%S', time.gmtime(float(run_time.replace(" second","").strip())))
         self.canvas.create_text(width // 2, 40, text=f"ELM: {elm_version}  |  Runtime: {run_time}",
                                 fill='#00FF00', font=('Digital-7', 24), tags='header')
 
@@ -89,13 +89,42 @@ class OBD2Dashboard:
 
         # Barometric pressure (top left)
         baro = self.current_data.get('BAROMETRIC_PRESSURE', {}).get('value', '0')
-        self.canvas.create_text(150, 100, text=f"Barometric\n{baro}",
+        self.canvas.create_text(160, 100, text=f"Barometric",
                                 fill='#888888', font=('Arial', 14), tags='baro')
+        self.canvas.create_text(160, 130, text=f"{baro}",
+                                fill='#00FFFF', font=('Digital-7', 24))
 
         # Commanded Equiv Ratio (top right)
         ratio = self.current_data.get('COMMANDED_EQUIV_RATIO', {}).get('value', '0')
-        self.canvas.create_text(width - 150, 100, text=f"Equiv Ratio\n{ratio}",
+        self.canvas.create_text(width - 160, 100, text=f"Equiv Ratio",
                                 fill='#888888', font=('Arial', 14), tags='ratio')
+        ratio = float(ratio.replace("ratio", "").strip())
+        meaning = "N/A"
+        color = "#888888"
+
+        if ratio >= 1.1:
+            meaning = "LEAN"
+            color = "#FF0000"
+
+        elif 1.1 > ratio >= 1.02:
+            meaning = "~LEAN"
+            color = "#00FFFF"
+
+        elif 1.01 > ratio >= 0.99:
+            meaning = "STOICHIOMETRIC"
+            color = "#00FF00"
+
+        elif 0.99 > ratio >= 0.95:
+            meaning = "~RICH"
+            color = "#00FFFF"
+
+        elif 0.95 > ratio >= 0.85:
+            meaning = "RICH"
+            color = "#FF0000"
+
+
+        self.canvas.create_text(width - 160, 130, text=f"{round(ratio, 2)} ({meaning})",
+                                fill=color, font=('Digital-7', 24))
 
     def draw_rpm_gauge(self, cx, cy):
         radius = 80
@@ -186,7 +215,7 @@ class OBD2Dashboard:
 
     def draw_coolant_temp(self, x, y):
         temp_val = float(self.current_data.get('COOLANT_TEMP', {}).get('value', '0').split()[0])
-        max_temp = 120
+        max_temp = 150
         bar_height = 300
         bar_width = 30
 
@@ -353,22 +382,22 @@ def obd_reader_thread(dashboard):
     while True:
         # Simulate reading OBD data (replace with actual OBD reading)
         simulated_data = {
-            "SPEED": {"value": f"{random.randint(0, 120)} kilometer_per_hour", "unit": "kilometer_per_hour"},
-            "RPM": {"value": f"{random.randint(800, 7000)} revolutions_per_minute", "unit": "revolutions_per_minute"},
-            "COOLANT_TEMP": {"value": f"{random.randint(70, 100)} degree_Celsius", "unit": "degree_Celsius"},
-            "ENGINE_LOAD": {"value": f"{random.uniform(20, 80)} percent", "unit": "percent"},
-            "THROTTLE_POS": {"value": f"{random.uniform(10, 60)} percent", "unit": "percent"},
-            "INTAKE_TEMP": {"value": f"{random.randint(15, 45)} degree_Celsius", "unit": "degree_Celsius"},
+            "SPEED": {"value": f"{random.randint(0, 140)} kilometer_per_hour", "unit": "kilometer_per_hour"},
+            "RPM": {"value": f"{random.randint(1500, 8000)} revolutions_per_minute", "unit": "revolutions_per_minute"},
+            "COOLANT_TEMP": {"value": f"{random.randint(70, 180)} degree_Celsius", "unit": "degree_Celsius"},
+            "ENGINE_LOAD": {"value": f"{random.uniform(20, 90)} percent", "unit": "percent"},
+            "THROTTLE_POS": {"value": f"{random.uniform(10, 90)} percent", "unit": "percent"},
+            "INTAKE_TEMP": {"value": f"{random.randint(15, 65)} degree_Celsius", "unit": "degree_Celsius"},
             "O2_B1S1": {"value": f"{random.uniform(0.1, 0.9)} volt", "unit": "volt"},
             "O2_B2S1": {"value": f"{random.uniform(0.1, 0.9)} volt", "unit": "volt"},
             "ELM_VERSION": {"value": "ELM327 v1.5", "unit": "N/A"},
-            "RUN_TIME": {"value": f"{random.randint(0, 3600)} second", "unit": "second"},
+            "RUN_TIME": {"value": f"{random.randint(0, 10000)} second", "unit": "second"},
             "BAROMETRIC_PRESSURE": {"value": f"{random.randint(90, 105)} kilopascal", "unit": "kilopascal"},
             "CONTROL_MODULE_VOLTAGE": {"value": f"{random.uniform(13, 15):.3f} volt", "unit": "volt"},
             "ELM_VOLTAGE": {"value": f"{random.uniform(12, 14):.1f} volt", "unit": "volt"},
-            "COMMANDED_EQUIV_RATIO": {"value": f"{random.uniform(0.9, 1.1):.6f} ratio", "unit": "ratio"},
-            "MONITOR_MISFIRE_CYLINDER_1": {"value": "PASSED", "unit": "N/A"},
-            "MONITOR_MISFIRE_CYLINDER_2": {"value": "PASSED", "unit": "N/A"}
+            "COMMANDED_EQUIV_RATIO": {"value": f"{random.uniform(0.8, 1.2):.6f} ratio", "unit": "ratio"},
+            "MONITOR_MISFIRE_CYLINDER_1": {"value": random.choice(["FAILED", "PASSED"]), "unit": "N/A"},
+            "MONITOR_MISFIRE_CYLINDER_2": {"value": random.choice(["FAILED", "PASSED"]), "unit": "N/A"}
         }
 
         dashboard.enqueue_data(simulated_data)
@@ -381,6 +410,7 @@ class OBDDataReader:
         self.connection = None
         self.running = False
         self.current_value = {}
+        self.elm_version_reading_complete = False
 
         # Load commands from JSON
         with open("./commands.json", "r") as file:
@@ -402,7 +432,14 @@ class OBDDataReader:
 
     def fetch_data(self):
         """Fetch sensor data and put it in the callback"""
+
         for cmd in self.commands_file.keys():
+            if cmd == "ELM_VERSION":
+                if self.elm_version_reading_complete:
+                    continue
+                else:
+                    self.elm_version_reading_complete = True
+
             try:
                 response = self.connection.query(obd.commands[cmd])
                 if not response.is_null():

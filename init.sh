@@ -8,5 +8,3 @@ cd $WORK_DIR/obd
 pwd
 python -m venv obd-env
 source obd-env/bin/activate
-apt install libbluetooth-dev
-
