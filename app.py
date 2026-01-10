@@ -12,6 +12,7 @@ class OBD2Dashboard:
         self.root.title("OBD2 Dashboard")
         self.root.configure(bg='black')
         self.root.attributes('-fullscreen', True)
+        #self.root.attributes('-zoomed', True)
         self.root.bind('<Escape>', lambda e: root.quit())
 
         # Queue for receiving data from OBD reader thread
@@ -349,8 +350,6 @@ class OBD2Dashboard:
 # Example OBD reader thread function
 def obd_reader_thread(dashboard):
     """Simulated OBD reader that sends data to dashboard"""
-    import random
-
     while True:
         # Simulate reading OBD data (replace with actual OBD reading)
         simulated_data = {
@@ -373,32 +372,15 @@ def obd_reader_thread(dashboard):
         }
 
         dashboard.enqueue_data(simulated_data)
-        time.sleep(0.5)  # Update every 500ms
+        time.sleep(0.15)  # Update every 500ms
 
 class OBDDataReader:
     def __init__(self, callback):
-        """Initialize OBD reader with a queue for data sharing"""
+        """Initialize OBD reader with a callback for data sharing"""
         self.callback = callback
         self.connection = None
         self.running = False
-        self.current_value = {
-            "SPEED": {"value": f"{random.randint(0, 120)} kilometer_per_hour", "unit": "kilometer_per_hour"},
-            "RPM": {"value": f"{random.randint(800, 7000)} revolutions_per_minute", "unit": "revolutions_per_minute"},
-            "COOLANT_TEMP": {"value": f"{random.randint(70, 100)} degree_Celsius", "unit": "degree_Celsius"},
-            "ENGINE_LOAD": {"value": f"{random.uniform(20, 80)} percent", "unit": "percent"},
-            "THROTTLE_POS": {"value": f"{random.uniform(10, 60)} percent", "unit": "percent"},
-            "INTAKE_TEMP": {"value": f"{random.randint(15, 45)} degree_Celsius", "unit": "degree_Celsius"},
-            "O2_B1S1": {"value": f"{random.uniform(0.1, 0.9)} volt", "unit": "volt"},
-            "O2_B2S1": {"value": f"{random.uniform(0.1, 0.9)} volt", "unit": "volt"},
-            "ELM_VERSION": {"value": "ELM327 v1.5", "unit": "N/A"},
-            "RUN_TIME": {"value": f"{random.randint(0, 3600)} second", "unit": "second"},
-            "BAROMETRIC_PRESSURE": {"value": f"{random.randint(90, 105)} kilopascal", "unit": "kilopascal"},
-            "CONTROL_MODULE_VOLTAGE": {"value": f"{random.uniform(13, 15):.3f} volt", "unit": "volt"},
-            "ELM_VOLTAGE": {"value": f"{random.uniform(12, 14):.1f} volt", "unit": "volt"},
-            "COMMANDED_EQUIV_RATIO": {"value": f"{random.uniform(0.9, 1.1):.6f} ratio", "unit": "ratio"},
-            "MONITOR_MISFIRE_CYLINDER_1": {"value": "PASSED", "unit": "N/A"},
-            "MONITOR_MISFIRE_CYLINDER_2": {"value": "PASSED", "unit": "N/A"}
-        }
+        self.current_value = {}
 
         # Load commands from JSON
         with open("./commands.json", "r") as file:
@@ -419,7 +401,7 @@ class OBDDataReader:
             return False
 
     def fetch_data(self):
-        """Fetch sensor data and put it in the queue"""
+        """Fetch sensor data and put it in the callback"""
         for cmd in self.commands_file.keys():
             try:
                 response = self.connection.query(obd.commands[cmd])
@@ -429,6 +411,7 @@ class OBDDataReader:
                             "value": str(response.value),
                             "unit": str(response.value.units) if hasattr(response.value, 'units') else "N/A"
                         }
+                        print(self.current_value[cmd])
                         self.callback(self.current_value)
             except Exception as e:
                 pass  # Silently skip errors for individual sensors
@@ -460,14 +443,14 @@ class IntegratedDashboard:
 
         # Create dashboard after binding resize
         self.dashboard = OBD2Dashboard(self.root)
-        self.reader = OBDDataReader(dashboard.enqueue_data)
+        self.reader = OBDDataReader(self.dashboard.enqueue_data)
 
         # Bind window close event
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def start_reader_thread(self):
         """Start the OBD reader in a separate thread"""
-        self.reader_thread = threading.Thread(target=self.reader.fetch_data, daemon=True)
+        self.reader_thread = threading.Thread(target=self.reader.run, daemon=True)
         self.reader_thread.start()
         print("OBD reader thread started")
 
@@ -496,15 +479,15 @@ class IntegratedDashboard:
             # self.root.mainloop()
 
 if __name__ == "__main__":
-    # app = IntegratedDashboard()
-    # app.run()
+     # app = IntegratedDashboard()
+     # app.run()
 
-    root = tk.Tk()
-    dashboard = OBD2Dashboard(root)
+   root = tk.Tk()
+   dashboard = OBD2Dashboard(root)
 
 
-    # Start OBD reader thread (replace with your actual OBD reader)
-    reader_thread = threading.Thread(target=obd_reader_thread, args=(dashboard,), daemon=True)
-    reader_thread.start()
+   # Start OBD reader thread (replace with your actual OBD reader)
+   reader_thread = threading.Thread(target=obd_reader_thread, args=(dashboard,), daemon=True)
+   reader_thread.start()
 
-    root.mainloop()
+   root.mainloop()
