@@ -9,14 +9,25 @@ class OBDDashboard:
         self.root = root
         self.root.title("OBD Dashboard")
         self.root.configure(bg='black')
-        self.root.geometry("1200x700")
+
+        # Design dimensions
+        self.design_width = 1200
+        self.design_height = 700
+
+        # Set initial geometry
+        self.root.geometry(f"{self.design_width}x{self.design_height}")
         self.root.attributes('-fullscreen', True)
         self.root.bind("<Escape>", self.end_fullscreen)
         self.root.bind("<F11>", self.end_fullscreen)
+        self.root.bind("<Configure>", self.on_window_resize)
 
-        # Main canvas
-        self.canvas = tk.Canvas(root, width=1200, height=700, bg='black', highlightthickness=0)
+        # Main canvas with centered content
+        self.canvas = tk.Canvas(root, bg='black', highlightthickness=0)
         self.canvas.pack(fill=tk.BOTH, expand=True)
+
+        # Offset for centering
+        self.x_offset = 0
+        self.y_offset = 0
 
         # Fonts
         self.speed_font = font.Font(family="Digital-7", size=80, weight="bold")
@@ -24,33 +35,69 @@ class OBDDashboard:
         self.value_font = font.Font(family="Arial", size=14, weight="bold")
         self.small_font = font.Font(family="Arial", size=10)
 
+        # Draw after a short delay to ensure window is sized
+        self.root.after(10, self.initialize_display)
+
+    def on_window_resize(self, event):
+        """Handle window resize events to recenter content"""
+        if event.widget == self.root:
+            # Calculate new offsets
+            window_width = self.root.winfo_width()
+            window_height = self.root.winfo_height()
+
+            self.x_offset = max(0, (window_width - self.design_width) // 2)
+            self.y_offset = max(0, (window_height - self.design_height) // 2)
+
+            # Redraw everything with new offset
+            if hasattr(self, 'initialized') and self.initialized:
+                self.canvas.delete("all")
+                self.draw_static_elements()
+
+    def initialize_display(self):
+        """Initialize the display after window is properly sized"""
+        self.initialized = False
+        window_width = self.root.winfo_width()
+        window_height = self.root.winfo_height()
+
+        self.x_offset = max(0, (window_width - self.design_width) // 2)
+        self.y_offset = max(0, (window_height - self.design_height) // 2)
+
         self.draw_static_elements()
         self.setup_update_handlers()
+        self.initialized = True
+
+    def x(self, coord):
+        """Apply x-offset for centering"""
+        return coord + self.x_offset
+
+    def y(self, coord):
+        """Apply y-offset for centering"""
+        return coord + self.y_offset
 
     def draw_static_elements(self):
         """Draw static UI elements"""
         # Title area
-        self.canvas.create_text(600, 30, text="VEHICLE DIAGNOSTICS",
+        self.canvas.create_text(self.x(600), self.y(30), text="VEHICLE DIAGNOSTICS",
                                 fill='#00ffff', font=('Arial', 20, 'bold'))
 
         # ELM Version label
-        self.elm_label = self.canvas.create_text(150, 70, text="ELM Version:",
+        self.elm_label = self.canvas.create_text(self.x(150), self.y(70), text="ELM Version:",
                                                  fill='#888888', font=self.small_font, anchor='w')
-        self.elm_value = self.canvas.create_text(150, 90, text="",
+        self.elm_value = self.canvas.create_text(self.x(150), self.y(90), text="",
                                                  fill='#00ff00', font=self.label_font, anchor='w')
 
         # Run Time label
-        self.runtime_label = self.canvas.create_text(400, 70, text="Run Time:",
+        self.runtime_label = self.canvas.create_text(self.x(400), self.y(70), text="Run Time:",
                                                      fill='#888888', font=self.small_font, anchor='w')
-        self.runtime_value = self.canvas.create_text(400, 90, text="",
+        self.runtime_value = self.canvas.create_text(self.x(400), self.y(90), text="",
                                                      fill='#00ff00', font=self.label_font, anchor='w')
 
         # Speed display (center)
-        self.canvas.create_text(600, 200, text="SPEED",
+        self.canvas.create_text(self.x(600), self.y(200), text="SPEED",
                                 fill='#666666', font=self.label_font)
-        self.speed_text = self.canvas.create_text(600, 280, text="0",
+        self.speed_text = self.canvas.create_text(self.x(600), self.y(280), text="0",
                                                   fill='#00ffff', font=self.speed_font)
-        self.canvas.create_text(600, 340, text="km/h",
+        self.canvas.create_text(self.x(600), self.y(340), text="km/h",
                                 fill='#666666', font=self.label_font)
 
         # RPM Gauge (left side)
@@ -73,11 +120,12 @@ class OBDDashboard:
         cx, cy, r = 250, 480, 120
 
         # Outer circle
-        self.canvas.create_oval(cx - r - 10, cy - r - 10, cx + r + 10, cy + r + 10,
+        self.canvas.create_oval(self.x(cx - r - 10), self.y(cy - r - 10),
+                                self.x(cx + r + 10), self.y(cy + r + 10),
                                 outline='#333333', width=3)
 
         # RPM Label
-        self.canvas.create_text(cx, cy - 150, text="RPM x1000",
+        self.canvas.create_text(self.x(cx), self.y(cy - 150), text="RPM x1000",
                                 fill='#888888', font=self.label_font)
 
         # Draw scale marks and numbers
@@ -99,16 +147,17 @@ class OBDDashboard:
             else:
                 color = '#ff0000'
 
-            self.canvas.create_line(x1, y1, x2, y2, fill=color, width=3)
+            self.canvas.create_line(self.x(x1), self.y(y1), self.x(x2), self.y(y2),
+                                    fill=color, width=3)
 
             # Numbers
             x3 = cx + (r - 35) * math.cos(rad)
             y3 = cy - (r - 35) * math.sin(rad)
-            self.canvas.create_text(x3, y3, text=str(i), fill=color,
+            self.canvas.create_text(self.x(x3), self.y(y3), text=str(i), fill=color,
                                     font=self.small_font)
 
         # RPM value text
-        self.rpm_value_text = self.canvas.create_text(cx, cy + 40, text="0",
+        self.rpm_value_text = self.canvas.create_text(self.x(cx), self.y(cy + 40), text="0",
                                                       fill='#00ffff',
                                                       font=('Arial', 18, 'bold'))
 
@@ -120,25 +169,27 @@ class OBDDashboard:
         self.draw_thermometer_icon(x + w / 2, y - 65, '#ff6666')
 
         # Border
-        self.canvas.create_rectangle(x, y, x + w, y + h, outline='#333333', width=3)
+        self.canvas.create_rectangle(self.x(x), self.y(y), self.x(x + w), self.y(y + h),
+                                     outline='#333333', width=3)
 
         # Label
-        self.canvas.create_text(x + w / 2, y - 23, text="COOLANT",
+        self.canvas.create_text(self.x(x + w / 2), self.y(y - 23), text="COOLANT",
                                 fill='#888888', font=self.small_font)
-        self.canvas.create_text(x + w / 2, y - 8, text="TEMP °C",
+        self.canvas.create_text(self.x(x + w / 2), self.y(y - 8), text="TEMP °C",
                                 fill='#888888', font=self.small_font)
 
         # Temperature marks
         temps = [120, 100, 80, 60, 40, 20, 0]
         for i, temp in enumerate(temps):
             y_pos = y + (i * h / 6)
-            self.canvas.create_line(x + w, y_pos, x + w + 10, y_pos, fill='#666666', width=2)
-            self.canvas.create_text(x + w + 30, y_pos, text=str(temp),
+            self.canvas.create_line(self.x(x + w), self.y(y_pos), self.x(x + w + 10),
+                                    self.y(y_pos), fill='#666666', width=2)
+            self.canvas.create_text(self.x(x + w + 30), self.y(y_pos), text=str(temp),
                                     fill='#666666', font=self.small_font)
 
         # Value display
-        self.coolant_value_text = self.canvas.create_text(x + w / 2, y + h + 25, text="0°C",
-                                                          fill='#00ffff',
+        self.coolant_value_text = self.canvas.create_text(self.x(x + w / 2), self.y(y + h + 25),
+                                                          text="0°C", fill='#00ffff',
                                                           font=self.label_font)
 
     def draw_intake_bar_static(self):
@@ -149,80 +200,92 @@ class OBDDashboard:
         self.draw_thermometer_icon(x + w / 2, y - 65, '#66ff66')
 
         # Border
-        self.canvas.create_rectangle(x, y, x + w, y + h, outline='#333333', width=3)
+        self.canvas.create_rectangle(self.x(x), self.y(y), self.x(x + w), self.y(y + h),
+                                     outline='#333333', width=3)
 
         # Label
-        self.canvas.create_text(x + w / 2, y - 23, text="INTAKE",
+        self.canvas.create_text(self.x(x + w / 2), self.y(y - 23), text="INTAKE",
                                 fill='#888888', font=self.small_font)
-        self.canvas.create_text(x + w / 2, y - 8, text="TEMP °C",
+        self.canvas.create_text(self.x(x + w / 2), self.y(y - 8), text="TEMP °C",
                                 fill='#888888', font=self.small_font)
 
         # Temperature marks
         temps = [80, 70, 60, 50, 40, 30, 20, 10, 0]
         for i, temp in enumerate(temps):
             y_pos = y + (i * h / 8)
-            self.canvas.create_line(x - 10, y_pos, x, y_pos, fill='#666666', width=2)
-            self.canvas.create_text(x - 30, y_pos, text=str(temp),
+            self.canvas.create_line(self.x(x - 10), self.y(y_pos), self.x(x), self.y(y_pos),
+                                    fill='#666666', width=2)
+            self.canvas.create_text(self.x(x - 30), self.y(y_pos), text=str(temp),
                                     fill='#666666', font=self.small_font)
 
         # Value display
-        self.intake_value_text = self.canvas.create_text(x + w / 2, y + h + 25, text="0°C",
-                                                         fill='#00ffff',
+        self.intake_value_text = self.canvas.create_text(self.x(x + w / 2), self.y(y + h + 25),
+                                                         text="0°C", fill='#00ffff',
                                                          font=self.label_font)
 
     def draw_thermometer_icon(self, x, y, color):
         """Draw a thermometer icon"""
         # Bulb
-        self.canvas.create_oval(x - 8, y + 15, x + 8, y + 31, fill=color, outline=color)
+        self.canvas.create_oval(self.x(x - 8), self.y(y + 15), self.x(x + 8), self.y(y + 31),
+                                fill=color, outline=color)
         # Tube
-        self.canvas.create_rectangle(x - 4, y, x + 4, y + 20, fill=color, outline=color)
+        self.canvas.create_rectangle(self.x(x - 4), self.y(y), self.x(x + 4), self.y(y + 20),
+                                     fill=color, outline=color)
         # Top cap
-        self.canvas.create_oval(x - 4, y - 2, x + 4, y + 2, fill=color, outline=color)
+        self.canvas.create_oval(self.x(x - 4), self.y(y - 2), self.x(x + 4), self.y(y + 2),
+                                fill=color, outline=color)
 
     def draw_battery_icon(self, x, y, color):
         """Draw a battery icon"""
         # Battery body
-        self.canvas.create_rectangle(x - 12, y - 8, x + 12, y + 12, outline=color, width=2)
+        self.canvas.create_rectangle(self.x(x - 12), self.y(y - 8), self.x(x + 12),
+                                     self.y(y + 12), outline=color, width=2)
         # Battery terminal
-        self.canvas.create_rectangle(x - 4, y - 12, x + 4, y - 8, fill=color, outline=color)
+        self.canvas.create_rectangle(self.x(x - 4), self.y(y - 12), self.x(x + 4),
+                                     self.y(y - 8), fill=color, outline=color)
         # Plus sign
-        self.canvas.create_line(x - 3, y + 2, x + 3, y + 2, fill=color, width=2)
-        self.canvas.create_line(x, y - 1, x, y + 5, fill=color, width=2)
+        self.canvas.create_line(self.x(x - 3), self.y(y + 2), self.x(x + 3),
+                                self.y(y + 2), fill=color, width=2)
+        self.canvas.create_line(self.x(x), self.y(y - 1), self.x(x),
+                                self.y(y + 5), fill=color, width=2)
 
     def draw_piston_icon(self, x, y, color):
         """Draw a piston icon"""
         # Piston head
-        self.canvas.create_rectangle(x - 10, y - 5, x + 10, y + 5, fill=color, outline=color)
+        self.canvas.create_rectangle(self.x(x - 10), self.y(y - 5), self.x(x + 10),
+                                     self.y(y + 5), fill=color, outline=color)
         # Piston rod
-        self.canvas.create_rectangle(x - 3, y + 5, x + 3, y + 15, fill=color, outline=color)
+        self.canvas.create_rectangle(self.x(x - 3), self.y(y + 5), self.x(x + 3),
+                                     self.y(y + 15), fill=color, outline=color)
         # Connecting point
-        self.canvas.create_oval(x - 4, y + 13, x + 4, y + 21, fill=color, outline=color)
+        self.canvas.create_oval(self.x(x - 4), self.y(y + 13), self.x(x + 4),
+                                self.y(y + 21), fill=color, outline=color)
 
     def draw_misfire_indicators(self):
         """Draw misfire indicator icons"""
         # Center the cylinders under the header
-        header_x = 535  # Center position for the header
+        header_x = 535
         y_pos = 550
         spacing = 100
-        x_start = header_x - spacing / 2  # Start position for first cylinder
+        x_start = header_x - spacing / 2
 
         # Header text centered
-        self.canvas.create_text(header_x, y_pos - 40, text="CYLINDER MISFIRES",
+        self.canvas.create_text(self.x(header_x), self.y(y_pos - 40), text="CYLINDER MISFIRES",
                                 fill='#888888', font=self.label_font)
 
         # Cylinder 1
         self.cyl1_piston = self.draw_piston_icon(x_start, y_pos - 10, '#666666')
-        self.canvas.create_text(x_start, y_pos + 25, text="CYL 1",
+        self.canvas.create_text(self.x(x_start), self.y(y_pos + 25), text="CYL 1",
                                 fill='#666666', font=self.small_font)
-        self.cyl1_status = self.canvas.create_text(x_start, y_pos + 45, text="",
+        self.cyl1_status = self.canvas.create_text(self.x(x_start), self.y(y_pos + 45), text="",
                                                    fill='#00ff00', font=self.small_font)
 
         # Cylinder 2
         x2 = x_start + spacing
         self.cyl2_piston = self.draw_piston_icon(x2, y_pos - 10, '#666666')
-        self.canvas.create_text(x2, y_pos + 25, text="CYL 2",
+        self.canvas.create_text(self.x(x2), self.y(y_pos + 25), text="CYL 2",
                                 fill='#666666', font=self.small_font)
-        self.cyl2_status = self.canvas.create_text(x2, y_pos + 45, text="",
+        self.cyl2_status = self.canvas.create_text(self.x(x2), self.y(y_pos + 45), text="",
                                                    fill='#00ff00', font=self.small_font)
 
         # Store positions for later updates
@@ -246,9 +309,9 @@ class OBDDashboard:
         self.param_bars = {}
 
         for label, x, y in params:
-            self.canvas.create_text(x, y, text=label, fill='#888888',
+            self.canvas.create_text(self.x(x), self.y(y), text=label, fill='#888888',
                                     font=self.small_font, anchor='w')
-            self.param_values[label] = self.canvas.create_text(x, y + 20, text="0",
+            self.param_values[label] = self.canvas.create_text(self.x(x), self.y(y + 20), text="0",
                                                                fill='#00ffff',
                                                                font=self.value_font,
                                                                anchor='w')
@@ -257,7 +320,8 @@ class OBDDashboard:
             if "LOAD" in label or "THROTTLE" in label:
                 bar_x = x + 150
                 self.param_bars[label] = self.canvas.create_rectangle(
-                    bar_x, y + 5, bar_x, y + 25, fill='', outline='#333333', width=2
+                    self.x(bar_x), self.y(y + 5), self.x(bar_x), self.y(y + 25),
+                    fill='', outline='#333333', width=2
                 )
 
             # Add battery icons for voltage
@@ -332,37 +396,22 @@ class OBDDashboard:
         }
 
     def update_sensor(self, sensor_name, sensor_value):
-        """
-        Update a single sensor value
-
-        Args:
-            sensor_name: Name of the sensor (e.g., 'SPEED', 'RPM')
-            sensor_value: Numeric value or string value of the sensor
-        """
+        """Update a single sensor value"""
         handler = self.update_handlers.get(sensor_name)
         if handler:
             handler(sensor_value)
 
     def update_from_sensor(self, sensor_data_tuple):
-        """
-        Update dashboard from JSON data (convenience method)
-
-        Args:
-            sensor_data_tuple: (Sensor Name and value -> {actual_value, unit_of_measurement})
-        """
+        """Update dashboard from sensor data tuple"""
         sensor_name, sensor_data = sensor_data_tuple
 
         if sensor_name in self.update_handlers:
-            # Extract numeric value from the value string
             value_str = sensor_data.get("value", "")
 
-            # For string values like ELM_VERSION
             if sensor_name == "ELM_VERSION":
                 self.update_sensor(sensor_name, value_str)
-            # For misfire monitors
             elif "MONITOR_MISFIRE" in sensor_name:
                 self.update_sensor(sensor_name, value_str)
-            # For numeric values
             else:
                 try:
                     value = float(value_str.split()[0])
@@ -377,7 +426,7 @@ class OBDDashboard:
         # Delete old needle
         self.canvas.delete("rpm_needle")
 
-        # Calculate angle (0 RPM = 225°, 8000 RPM = -45°)
+        # Calculate angle
         rpm_percent = min(rpm / 8000, 1.0)
         angle = 225 - (rpm_percent * 270)
         rad = math.radians(angle)
@@ -395,10 +444,10 @@ class OBDDashboard:
             color = '#ff0000'
 
         # Draw needle
-        self.canvas.create_line(cx, cy, x, y, fill=color, width=4,
-                                tags="rpm_needle")
-        self.canvas.create_oval(cx - 8, cy - 8, cx + 8, cy + 8, fill=color,
-                                outline=color, tags="rpm_needle")
+        self.canvas.create_line(self.x(cx), self.y(cy), self.x(x), self.y(y),
+                                fill=color, width=4, tags="rpm_needle")
+        self.canvas.create_oval(self.x(cx - 8), self.y(cy - 8), self.x(cx + 8),
+                                self.y(cy + 8), fill=color, outline=color, tags="rpm_needle")
 
         # Update value
         self.canvas.itemconfig(self.rpm_value_text, text=f"{int(rpm)}")
@@ -410,23 +459,26 @@ class OBDDashboard:
         # Delete old bar
         self.canvas.delete("coolant_bar")
 
-        # Calculate fill height (0-120°C range)
+        # Calculate fill height
         fill_percent = min(temp / 120, 1.0)
         fill_height = h * fill_percent
 
-        # Color based on temperature - red above 90°C
+        # Color based on temperature
         if temp < 60:
-            color = '#00ffff'  # Cold - cyan
+            color = '#00ffff'
         elif temp < 80:
-            color = '#00ff00'  # Normal - green
+            color = '#00ff00'
         elif temp <= 90:
-            color = '#ffff00'  # Warm - yellow
+            color = '#ffff00'
         else:
-            color = '#ff0000'  # Hot - red (above 90°C)
+            color = '#ff0000'
 
         # Draw filled bar from bottom
-        self.canvas.create_rectangle(x + 2, y + h - fill_height + 2, x + w - 2, y + h - 2,
-                                     fill=color, outline='', tags="coolant_bar")
+        self.canvas.create_rectangle(
+            self.x(x + 2), self.y(y + h - fill_height + 2),
+            self.x(x + w - 2), self.y(y + h - 2),
+            fill=color, outline='', tags="coolant_bar"
+        )
 
         # Update value
         self.canvas.itemconfig(self.coolant_value_text,
@@ -439,23 +491,26 @@ class OBDDashboard:
         # Delete old bar
         self.canvas.delete("intake_bar")
 
-        # Calculate fill height (0-80°C range)
+        # Calculate fill height
         fill_percent = min(temp / 80, 1.0)
         fill_height = h * fill_percent
 
-        # Color based on temperature - red above 50°C
+        # Color based on temperature
         if temp < 30:
-            color = '#00ffff'  # Cold - cyan
+            color = '#00ffff'
         elif temp < 40:
-            color = '#00ff00'  # Normal - green
+            color = '#00ff00'
         elif temp <= 50:
-            color = '#ffff00'  # Warm - yellow
+            color = '#ffff00'
         else:
-            color = '#ff0000'  # Hot - red (above 50°C)
+            color = '#ff0000'
 
         # Draw filled bar from bottom
-        self.canvas.create_rectangle(x + 2, y + h - fill_height + 2, x + w - 2, y + h - 2,
-                                     fill=color, outline='', tags="intake_bar")
+        self.canvas.create_rectangle(
+            self.x(x + 2), self.y(y + h - fill_height + 2),
+            self.x(x + w - 2), self.y(y + h - 2),
+            fill=color, outline='', tags="intake_bar"
+        )
 
         # Update value
         self.canvas.itemconfig(self.intake_value_text,
@@ -510,7 +565,7 @@ class OBDDashboard:
 
     def end_fullscreen(self, event=None):
         self.root.attributes("-fullscreen", False)
-        return "break"  # Prevents default Tkinter behavior
+        return "break"
 
 
 # Example usage
@@ -518,10 +573,4 @@ if __name__ == "__main__":
     root = tk.Tk()
     dashboard = OBDDashboard(root)
 
-
-    with open("./sample.json", "r") as file:
-        data = json.load(file)
-        for key in data.keys():
-            dashboard.update_from_sensor((key, data.get(key)))
     root.mainloop()
-

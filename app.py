@@ -70,13 +70,39 @@ class IntegratedDashboard:
     def __init__(self):
         """Initialize the integrated dashboard with threading"""
         self.root = tk.Tk()
-        self.dashboard = OBDDashboard(self.root)
         self.data_queue = queue.Queue()
         self.reader = OBDDataReader(self.data_queue)
         self.reader_thread = None
 
+        # Bind canvas resize to center the dashboard
+        self.root.bind("<Configure>", self.on_resize)
+
+        # Create dashboard after binding resize
+        self.dashboard = OBDDashboard(self.root)
+
         # Bind window close event
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+    def on_resize(self, event):
+        """Handle window resize to center the canvas"""
+        if hasattr(self, 'dashboard'):
+            # Get window dimensions
+            window_width = event.width
+            window_height = event.height
+
+            # Dashboard design size
+            design_width = 1200
+            design_height = 700
+
+            # Calculate offset to center
+            x_offset = (window_width - design_width) // 2
+            y_offset = (window_height - design_height) // 2
+
+            # Update canvas scroll region to center content
+            self.dashboard.canvas.configure(scrollregion=(
+                -x_offset, -y_offset,
+                design_width + x_offset, design_height + y_offset
+            ))
 
     def start_reader_thread(self):
         """Start the OBD reader in a separate thread"""
@@ -95,7 +121,7 @@ class IntegratedDashboard:
             pass
 
         # Schedule next update (every 50ms for smooth UI)
-        self.root.after(5, self.update_ui)
+        self.root.after(0, self.update_ui)
 
     def on_closing(self):
         """Handle window close event"""
@@ -115,7 +141,7 @@ class IntegratedDashboard:
             self.start_reader_thread()
 
             # Start UI update loop
-            self.root.after(100, self.update_ui)
+            self.root.after(50, self.update_ui)
 
             # Start Tkinter main loop
             self.root.mainloop()

@@ -41,6 +41,8 @@ def fetch_obd_data(connection):
         except Exception as e:
             print(f"Error reading {cmd.name}: {e}")
 
+    # print(sensor_data)
+
 
 
 if __name__ == "__main__":
