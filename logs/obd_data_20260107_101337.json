@@ -1,0 +1,46 @@
+{
+    "ELM_VERSION": {
+        "value": "ELM327 v1.5",
+        "unit": "N/A"
+    },
+    "ABSOLUTE_LOAD": {
+        "value": "0.0 percent",
+        "unit": "percent"
+    },
+    "RUN_TIME_MIL": {
+        "value": "0.0 minute",
+        "unit": "minute"
+    },
+    "MONITOR_O2_B1S1": {
+        "value": "Unknown : 0.0 count [PASSED]",
+        "unit": "N/A"
+    },
+    "ENGINE_LOAD": {
+        "value": "36.86274509803921 percent",
+        "unit": "percent"
+    },
+    "ELM_VOLTAGE": {
+        "value": "12.2 volt",
+        "unit": "volt"
+    },
+    "CONTROL_MODULE_VOLTAGE": {
+        "value": "12.813 volt",
+        "unit": "volt"
+    },
+    "MONITOR_O2_B2S1": {
+        "value": "Unknown : 0.0 count [PASSED]\nUnknown : 0.0 count [PASSED]",
+        "unit": "N/A"
+    },
+    "COOLANT_TEMP": {
+        "value": "49 degree_Celsius",
+        "unit": "degree_Celsius"
+    },
+    "DISTANCE_W_MIL": {
+        "value": "0.0 kilometer",
+        "unit": "kilometer"
+    },
+    "RELATIVE_THROTTLE_POS": {
+        "value": "0.0 percent",
+        "unit": "percent"
+    }
+}
