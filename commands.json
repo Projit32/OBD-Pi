@@ -24,11 +24,6 @@
     "unit": "second"
     
   },
-  "ABSOLUTE_LOAD": {
-    
-    "unit": "percent"
-    
-  },
   "BAROMETRIC_PRESSURE": {
     
     "unit": "kilopascal"
@@ -54,17 +49,7 @@
     "unit": "revolutions_per_minute"
     
   },
-  "RUN_TIME_MIL": {
-    
-    "unit": "minute"
-    
-  },
   "MONITOR_MISFIRE_CYLINDER_1": {
-    
-    "unit": "N/A"
-    
-  },
-  "MONITOR_O2_B1S1": {
     
     "unit": "N/A"
     
@@ -89,29 +74,9 @@
     "unit": "N/A"
     
   },
-  "MONITOR_O2_B2S1": {
-    
-    "unit": "N/A"
-    
-  },
-  "INTAKE_PRESSURE": {
-    
-    "unit": "kilopascal"
-    
-  },
   "COOLANT_TEMP": {
     
     "unit": "degree_Celsius"
-    
-  },
-  "DISTANCE_W_MIL": {
-    
-    "unit": "kilometer"
-    
-  },
-  "RELATIVE_THROTTLE_POS": {
-    
-    "unit": "percent"
     
   }
 }
