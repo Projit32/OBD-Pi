@@ -37,35 +37,10 @@ def fetch_obd_data(connection):
                         "value": str(response.value),
                         "unit": str(response.value.units) if hasattr(response.value, 'units') else "N/A"
                     }
+                    print(sensor_data[cmd])
         except Exception as e:
             print(f"Error reading {cmd.name}: {e}")
 
-    # Generate filename with timestamp
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"obd_data_{timestamp}.json"
-    filepath = os.path.join(output_folder, filename)
-
-    # Save to JSON file
-    with open(filepath, 'w') as f:
-        print(sensor_data)
-        json.dump(sensor_data, f, indent=4)
-
-    print(f"Data saved to: {filepath}\n")
-    print("=" * 50)
-    print("SENSOR DATA:")
-    print("=" * 50)
-
-    # Print the dictionary
-    for sensor, data in sensor_data.items():
-        print(f"{sensor}:")
-        print(f"  Value: {data['value']}")
-        print(f"  Unit: {data['unit']}")
-        print()
-
-    print("=" * 50)
-    print(f"Total sensors read: {len(sensor_data)}")
-
-    return sensor_data
 
 
 if __name__ == "__main__":

@@ -10,6 +10,9 @@ class OBDDashboard:
         self.root.title("OBD Dashboard")
         self.root.configure(bg='black')
         self.root.geometry("1200x700")
+        self.root.attributes('-fullscreen', True)
+        self.root.bind("<Escape>", self.end_fullscreen)
+        self.root.bind("<F11>", self.end_fullscreen)
 
         # Main canvas
         self.canvas = tk.Canvas(root, width=1200, height=700, bg='black', highlightthickness=0)
@@ -340,36 +343,32 @@ class OBDDashboard:
         if handler:
             handler(sensor_value)
 
-    def update_from_json(self, obd_json):
+    def update_from_sensor(self, sensor_data_tuple):
         """
         Update dashboard from JSON data (convenience method)
 
         Args:
-            obd_json: JSON string or dictionary containing OBD data
+            sensor_data_tuple: (Sensor Name and value -> {actual_value, unit_of_measurement})
         """
-        if isinstance(obd_json, str):
-            data = json.loads(obd_json)
-        else:
-            data = obd_json
+        sensor_name, sensor_data = sensor_data_tuple
 
-        for sensor_name, sensor_data in data.items():
-            if sensor_name in self.update_handlers:
-                # Extract numeric value from the value string
-                value_str = sensor_data.get("value", "")
+        if sensor_name in self.update_handlers:
+            # Extract numeric value from the value string
+            value_str = sensor_data.get("value", "")
 
-                # For string values like ELM_VERSION
-                if sensor_name == "ELM_VERSION":
-                    self.update_sensor(sensor_name, value_str)
-                # For misfire monitors
-                elif "MONITOR_MISFIRE" in sensor_name:
-                    self.update_sensor(sensor_name, value_str)
-                # For numeric values
-                else:
-                    try:
-                        value = float(value_str.split()[0])
-                        self.update_sensor(sensor_name, value)
-                    except (ValueError, IndexError):
-                        pass
+            # For string values like ELM_VERSION
+            if sensor_name == "ELM_VERSION":
+                self.update_sensor(sensor_name, value_str)
+            # For misfire monitors
+            elif "MONITOR_MISFIRE" in sensor_name:
+                self.update_sensor(sensor_name, value_str)
+            # For numeric values
+            else:
+                try:
+                    value = float(value_str.split()[0])
+                    self.update_sensor(sensor_name, value)
+                except (ValueError, IndexError):
+                    pass
 
     def update_rpm_gauge(self, rpm):
         """Update RPM gauge needle"""
@@ -509,24 +508,20 @@ class OBDDashboard:
                            coords[0] + width, coords[3])
         self.canvas.itemconfig(self.param_bars[param], fill=color, outline=color)
 
+    def end_fullscreen(self, event=None):
+        self.root.attributes("-fullscreen", False)
+        return "break"  # Prevents default Tkinter behavior
+
 
 # Example usage
 if __name__ == "__main__":
     root = tk.Tk()
     dashboard = OBDDashboard(root)
 
-    # Method 1: Update individual sensors
-    # dashboard.update_sensor('SPEED', 65.5)
-    # dashboard.update_sensor('RPM', 2500)
-    # dashboard.update_sensor('COOLANT_TEMP', 85)
-    # dashboard.update_sensor('INTAKE_TEMP', 35)
-    # dashboard.update_sensor('ENGINE_LOAD', 45.2)
-    # dashboard.update_sensor('THROTTLE_POS', 30.5)
-    # dashboard.update_sensor('ELM_VERSION', 'ELM327 v1.5')
-    # dashboard.update_sensor('RUN_TIME', 245)  # 245 seconds
 
     with open("./sample.json", "r") as file:
         data = json.load(file)
-        dashboard.update_from_json(data)
+        for key in data.keys():
+            dashboard.update_from_sensor((key, data.get(key)))
     root.mainloop()
 
