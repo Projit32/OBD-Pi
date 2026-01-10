@@ -33,7 +33,7 @@ def fetch_obd_data(connection):
             if not response.is_null():
                 # Store the value with its unit
                 if response.value is not None:
-                    sensor_data[cmd.name] = {
+                    sensor_data[cmd] = {
                         "value": str(response.value),
                         "unit": str(response.value.units) if hasattr(response.value, 'units') else "N/A"
                     }
@@ -60,7 +60,6 @@ def fetch_obd_data(connection):
         print(f"{sensor}:")
         print(f"  Value: {data['value']}")
         print(f"  Unit: {data['unit']}")
-        print(f"  Command: {data['command']}")
         print()
 
     print("=" * 50)
