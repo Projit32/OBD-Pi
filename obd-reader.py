@@ -27,8 +27,8 @@ def fetch_obd_data(connection):
     #supported_commands = connection.supported_commands
 
     # Query each supported command
-    start = time.process_time()
-    for cmd in commands_file.keys():
+    start = time.time()
+    for cmd in commands_file:
         try:
             response = connection.query(obd.commands[cmd])
             if not response.is_null():
@@ -42,7 +42,7 @@ def fetch_obd_data(connection):
         except Exception as e:
             print(f"Error reading {cmd.name}: {e}")
 
-    print("Total time for this run : ", time.process_time() - start)
+    print("Total time for this run : ", round(time.time() - start, 2))
 
 
 

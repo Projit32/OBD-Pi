@@ -1,77 +1,17 @@
-{
-  "SPEED": {
-    
-    "unit": "kilometer_per_hour"
-    
-  },
-  "O2_B2S1": {
-    
-    "unit": "volt"
-    
-  },
-  "COMMANDED_EQUIV_RATIO": {
-    
-    "unit": "ratio"
-    
-  },
-  "RUN_TIME": {
-    
-    "unit": "second"
-    
-  },
-  "BAROMETRIC_PRESSURE": {
-    
-    "unit": "kilopascal"
-    
-  },
-  "THROTTLE_POS": {
-    
-    "unit": "percent"
-    
-  },
-  "INTAKE_TEMP": {
-    
-    "unit": "degree_Celsius"
-    
-  },
-  "O2_B1S1": {
-    
-    "unit": "volt"
-    
-  },
-  "RPM": {
-    
-    "unit": "revolutions_per_minute"
-    
-  },
-  "MONITOR_MISFIRE_CYLINDER_1": {
-    
-    "unit": "N/A"
-    
-  },
-  "ENGINE_LOAD": {
-    
-    "unit": "percent"
-    
-  },
-  "ELM_VOLTAGE": {
-    
-    "unit": "volt"
-    
-  },
-  "CONTROL_MODULE_VOLTAGE": {
-    
-    "unit": "volt"
-    
-  },
-  "MONITOR_MISFIRE_CYLINDER_2": {
-    
-    "unit": "N/A"
-    
-  },
-  "COOLANT_TEMP": {
-    
-    "unit": "degree_Celsius"
-    
-  }
-}
+[
+  "SPEED",
+  "O2_B2S1",
+  "COMMANDED_EQUIV_RATIO",
+  "RUN_TIME",
+  "BAROMETRIC_PRESSURE",
+  "THROTTLE_POS",
+  "INTAKE_TEMP",
+  "O2_B1S1",
+  "RPM",
+  "MONITOR_MISFIRE_CYLINDER_1",
+  "ENGINE_LOAD",
+  "ELM_VOLTAGE",
+  "CONTROL_MODULE_VOLTAGE",
+  "MONITOR_MISFIRE_CYLINDER_2",
+  "COOLANT_TEMP"
+]

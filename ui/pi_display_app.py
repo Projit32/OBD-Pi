@@ -370,7 +370,7 @@ class OBD2Dashboard:
         except queue.Empty:
             pass
 
-        self.root.after(32, self.update_dashboard)
+        self.root.after(64, self.update_dashboard)
 
     def enqueue_data(self, data):
         """Thread-safe method to add data to queue"""
@@ -398,7 +398,7 @@ if __name__ == "__main__":
                count = 0
 
            dashboard.enqueue_data(simulated_data)
-           time.sleep(0.32)
+           time.sleep(0.11)
 
 
    # Start OBD reader thread (replace with your actual OBD reader)

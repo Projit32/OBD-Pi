@@ -15,7 +15,8 @@ class OBDDataReader:
 
         # Load commands from JSON
         with open("./commands.json", "r") as file:
-            self.commands_file = json.load(file)
+            commands_file = json.load(file)
+            self.commands = [obd.commands[key] for key in commands_file]
 
     def connect(self):
         """Establish connection to OBD interface"""
@@ -30,7 +31,16 @@ class OBDDataReader:
                         "unit": str(response.value.units) if hasattr(response.value, 'units') else "N/A"
                     }
                     print("ELM VERSION : ", self.current_value["ELM_VERSION"]["value"])
-                return True
+
+                self.connection.close()
+
+                self.connection = obd.Async(delay_cmds=0.05)
+                if self.connection.is_connected():
+                    print(f"Async Connection established with: {self.connection.port_name()}")
+                    return True
+                else:
+                    print("Failed to Async Connect to OBD2 interface!")
+                    return False
             else:
                 print("Failed to connect to OBD2 interface!")
                 return False
@@ -41,23 +51,31 @@ class OBDDataReader:
     def fetch_data(self):
         """Fetch sensor data and put it in the callback"""
 
-        for cmd in self.commands_file.keys():
+        for cmd in self.commands:
             try:
-                response = self.connection.query(obd.commands[cmd])
-                if not response.is_null():
-                    if response.value is not None:
-                        self.current_value[cmd]= {
-                            "value": str(response.value),
-                            "unit": str(response.value.units) if hasattr(response.value, 'units') else "N/A"
-                        }
-                        print(self.current_value[cmd])
-                        self.callback(self.current_value)
+                response = self.connection.query(cmd)
+                if not response.is_null() and response.value is not None:
+                    self.current_value[cmd.name]= {
+                        "value": str(response.value),
+                        "unit": str(response.value.units) if hasattr(response.value, 'units') else "N/A"
+                    }
+                    self.callback(self.current_value)
+                    time.sleep(0.11)
             except Exception as e:
                 pass  # Silently skip errors for individual sensors
 
 
     def run(self):
         """Main loop for reading OBD data"""
+        # Watch all commands
+        for cmd in self.commands:
+            self.connection.watch(cmd)
+
+        self.connection.start()
+
+        # Wait for first full cycle
+        print("Commands has been loaded to be watched. Waiting for a full cycle to complete... [2 sec]")
+        time.sleep(2)
         self.running = True
 
         while self.running:
