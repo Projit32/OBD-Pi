@@ -3,7 +3,6 @@ import json
 import queue
 import threading
 import time
-import random
 
 
 class OBD2Dashboard:
@@ -19,11 +18,7 @@ class OBD2Dashboard:
         self.data_queue = queue.Queue(maxsize=1)
 
         # Load initial sample data with fallback
-        try:
-            with open('../sample.json', 'r') as f:
-                self.current_data = json.load(f)
-        except:
-            self.current_data = self.get_default_data()
+        self.current_data = {}
 
         # Main canvas
         self.canvas = tk.Canvas(root, bg='black', highlightthickness=0)
@@ -34,26 +29,6 @@ class OBD2Dashboard:
         # Start update loop
         self.update_dashboard()
 
-    def get_default_data(self):
-        """Provide default data structure"""
-        return {
-            "SPEED": {"value": "0 kilometer_per_hour"},
-            "RPM": {"value": "0 revolutions_per_minute"},
-            "COOLANT_TEMP": {"value": "0 degree_Celsius"},
-            "ENGINE_LOAD": {"value": "0 percent"},
-            "THROTTLE_POS": {"value": "0 percent"},
-            "INTAKE_TEMP": {"value": "0 degree_Celsius"},
-            "O2_B1S1": {"value": "0 volt"},
-            "O2_B2S1": {"value": "0 volt"},
-            "ELM_VERSION": {"value": "N/A"},
-            "RUN_TIME": {"value": "0 second"},
-            "BAROMETRIC_PRESSURE": {"value": "0 kilopascal"},
-            "CONTROL_MODULE_VOLTAGE": {"value": "0 volt"},
-            "ELM_VOLTAGE": {"value": "0 volt"},
-            "COMMANDED_EQUIV_RATIO": {"value": "1.0 ratio"},
-            "MONITOR_MISFIRE_CYLINDER_1": {"value": "PASSED"},
-            "MONITOR_MISFIRE_CYLINDER_2": {"value": "PASSED"}
-        }
 
     def draw_dashboard(self):
         self.canvas.delete('all')
@@ -393,7 +368,7 @@ class OBD2Dashboard:
         except queue.Empty:
             pass
 
-        self.root.after(16, self.update_dashboard)
+        self.root.after(32, self.update_dashboard)
 
     def enqueue_data(self, data):
         """Thread-safe method to add data to queue"""
@@ -402,40 +377,30 @@ class OBD2Dashboard:
         except queue.Full:
             pass
 
-
-# Example OBD reader thread function
-def obd_reader_thread(dashboard):
-    """Simulated OBD reader that sends data to dashboard"""
-    while True:
-        simulated_data = {
-            "SPEED": {"value": f"{random.randint(0, 140)} kilometer_per_hour"},
-            "RPM": {"value": f"{random.randint(1500, 8000)} revolutions_per_minute"},
-            "COOLANT_TEMP": {"value": f"{random.randint(70, 120)} degree_Celsius"},
-            "ENGINE_LOAD": {"value": f"{random.uniform(20, 90)} percent"},
-            "THROTTLE_POS": {"value": f"{random.uniform(10, 90)} percent"},
-            "INTAKE_TEMP": {"value": f"{random.randint(15, 65)} degree_Celsius"},
-            "O2_B1S1": {"value": f"{random.uniform(0.1, 0.9)} volt"},
-            "O2_B2S1": {"value": f"{random.uniform(0.1, 0.9)} volt"},
-            "ELM_VERSION": {"value": "ELM327 v1.5"},
-            "RUN_TIME": {"value": f"{random.randint(0, 10000)} second"},
-            "BAROMETRIC_PRESSURE": {"value": f"{random.randint(90, 105)} kilopascal"},
-            "CONTROL_MODULE_VOLTAGE": {"value": f"{random.uniform(13, 15):.3f} volt"},
-            "ELM_VOLTAGE": {"value": f"{random.uniform(12, 14):.1f} volt"},
-            "COMMANDED_EQUIV_RATIO": {"value": f"{random.uniform(0.8, 1.2):.6f} ratio"},
-            "MONITOR_MISFIRE_CYLINDER_1": {"value": random.choice(["FAILED", "PASSED"])},
-            "MONITOR_MISFIRE_CYLINDER_2": {"value": random.choice(["FAILED", "PASSED"])}
-        }
-
-        dashboard.enqueue_data(simulated_data)
-        time.sleep(0.15)
-
-
 if __name__ == "__main__":
-    root = tk.Tk()
-    dashboard = OBD2Dashboard(root)
 
-    # Start OBD reader thread
-    reader_thread = threading.Thread(target=obd_reader_thread, args=(dashboard,), daemon=True)
-    reader_thread.start()
+   root = tk.Tk()
+   dashboard = OBD2Dashboard(root)
 
-    root.mainloop()
+   # Example OBD reader thread function
+   def obd_reader_thread(dashboard):
+       """Simulated OBD reader that sends data to dashboard"""
+       with open("./new-sample.json", "r") as logs:
+           data = json.load(logs)
+       count = 0
+       while True:
+           # Simulate reading OBD data (replace with actual OBD reading)
+           simulated_data = data[count]
+           count += 1
+           if count == len(data):
+               count = 0
+
+           dashboard.enqueue_data(simulated_data)
+           time.sleep(0.32)
+
+
+   # Start OBD reader thread (replace with your actual OBD reader)
+   reader_thread = threading.Thread(target=obd_reader_thread, args=(dashboard,), daemon=True)
+   reader_thread.start()
+
+   root.mainloop()

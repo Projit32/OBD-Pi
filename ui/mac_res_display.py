@@ -3,8 +3,6 @@ import json
 import queue
 import threading
 import time
-import obd
-import random
 
 class OBD2Dashboard:
     def __init__(self, root):
@@ -19,8 +17,8 @@ class OBD2Dashboard:
         self.data_queue = queue.Queue(maxsize=1)
 
         # Load initial sample data
-        with open('../sample.json', 'r') as f:
-            self.current_data = json.load(f)
+
+        self.current_data= {}
 
         # Main canvas
         self.canvas = tk.Canvas(root, bg='black', highlightthickness=0)
@@ -368,46 +366,34 @@ class OBD2Dashboard:
         except queue.Empty:
             pass
 
-        # Schedule next update (60 FPS)
-        self.root.after(16, self.update_dashboard)
+        # Schedule next update (30 FPS)
+        self.root.after(32, self.update_dashboard)
 
     def enqueue_data(self, data):
         """Thread-safe method to add data to queue"""
         self.data_queue.put(data)
 
 
-# Example OBD reader thread function
-def obd_reader_thread(dashboard):
-    """Simulated OBD reader that sends data to dashboard"""
-    while True:
-        # Simulate reading OBD data (replace with actual OBD reading)
-        simulated_data = {
-            "SPEED": {"value": f"{random.randint(0, 140)} kilometer_per_hour", "unit": "kilometer_per_hour"},
-            "RPM": {"value": f"{random.randint(1500, 8000)} revolutions_per_minute", "unit": "revolutions_per_minute"},
-            "COOLANT_TEMP": {"value": f"{random.randint(70, 180)} degree_Celsius", "unit": "degree_Celsius"},
-            "ENGINE_LOAD": {"value": f"{random.uniform(20, 90)} percent", "unit": "percent"},
-            "THROTTLE_POS": {"value": f"{random.uniform(10, 90)} percent", "unit": "percent"},
-            "INTAKE_TEMP": {"value": f"{random.randint(15, 65)} degree_Celsius", "unit": "degree_Celsius"},
-            "O2_B1S1": {"value": f"{random.uniform(0.1, 0.9)} volt", "unit": "volt"},
-            "O2_B2S1": {"value": f"{random.uniform(0.1, 0.9)} volt", "unit": "volt"},
-            "ELM_VERSION": {"value": "ELM327 v1.5", "unit": "N/A"},
-            "RUN_TIME": {"value": f"{random.randint(0, 10000)} second", "unit": "second"},
-            "BAROMETRIC_PRESSURE": {"value": f"{random.randint(90, 105)} kilopascal", "unit": "kilopascal"},
-            "CONTROL_MODULE_VOLTAGE": {"value": f"{random.uniform(13, 15):.3f} volt", "unit": "volt"},
-            "ELM_VOLTAGE": {"value": f"{random.uniform(12, 14):.1f} volt", "unit": "volt"},
-            "COMMANDED_EQUIV_RATIO": {"value": f"{random.uniform(0.8, 1.2):.6f} ratio", "unit": "ratio"},
-            "MONITOR_MISFIRE_CYLINDER_1": {"value": random.choice(["FAILED", "PASSED"]), "unit": "N/A"},
-            "MONITOR_MISFIRE_CYLINDER_2": {"value": random.choice(["FAILED", "PASSED"]), "unit": "N/A"}
-        }
-
-        dashboard.enqueue_data(simulated_data)
-        time.sleep(0.15)  # Update every 500ms
-
-
 if __name__ == "__main__":
 
    root = tk.Tk()
    dashboard = OBD2Dashboard(root)
+
+   # Example OBD reader thread function
+   def obd_reader_thread(dashboard):
+       """Simulated OBD reader that sends data to dashboard"""
+       with open("./new-sample.json", "r") as logs:
+           data = json.load(logs)
+       count = 0
+       while True:
+           # Simulate reading OBD data (replace with actual OBD reading)
+           simulated_data = data[count]
+           count += 1
+           if count == len(data):
+               count = 0
+
+           dashboard.enqueue_data(simulated_data)
+           time.sleep(0.32)
 
 
    # Start OBD reader thread (replace with your actual OBD reader)
