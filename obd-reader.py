@@ -1,7 +1,7 @@
 import obd
 import json
 import os
-from datetime import datetime
+import time
 
 with open("./commands.json", "r") as file:
     commands_file = json.load(file)
@@ -27,6 +27,7 @@ def fetch_obd_data(connection):
     #supported_commands = connection.supported_commands
 
     # Query each supported command
+    start = time.process_time()
     for cmd in commands_file.keys():
         try:
             response = connection.query(obd.commands[cmd])
@@ -41,7 +42,7 @@ def fetch_obd_data(connection):
         except Exception as e:
             print(f"Error reading {cmd.name}: {e}")
 
-    # print(sensor_data)
+    print("Total time for this run : ", time.process_time() - start)
 
 
 
