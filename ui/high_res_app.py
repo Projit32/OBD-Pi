@@ -12,7 +12,6 @@ class OBD2Dashboard:
         self.root.title("OBD2 Dashboard")
         self.root.configure(bg='black')
         self.root.geometry('1920x1080')
-        self.root.attributes('-fullscreen', True)
         self.root.bind('<Escape>', lambda e: root.quit())
 
         # Queue for receiving data from OBD reader thread
@@ -29,6 +28,8 @@ class OBD2Dashboard:
         self.canvas.bind('<Configure>', self.on_resize)
 
         self.draw_dashboard()
+        self.root.after(500, lambda: self.root.wm_attributes('-fullscreen', 'true'))
+
 
         # Start update loop
         self.update_dashboard()

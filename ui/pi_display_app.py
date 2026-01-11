@@ -11,7 +11,7 @@ class OBD2Dashboard:
         self.root.title("OBD2")
         self.root.configure(bg='black')
         self.root.geometry('480x320')
-        self.root.attributes('-fullscreen', True)
+        # self.root.attributes('-fullscreen', True)
         self.root.bind('<Escape>', lambda e: root.quit())
 
         # Queue for receiving data from OBD reader thread
@@ -25,6 +25,8 @@ class OBD2Dashboard:
         self.canvas.pack(fill=tk.BOTH, expand=True)
 
         self.draw_dashboard()
+
+        self.root.after(500, lambda: self.root.wm_attributes('-fullscreen', 'true'))
 
         # Start update loop
         self.update_dashboard()
@@ -104,20 +106,20 @@ class OBD2Dashboard:
         # === CENTER COLUMN ===
         # Temperature section
         y_center = 30
-        self.canvas.create_text(240, y_center, text="TEMPERATURE",
+        self.canvas.create_text(240, y_center, text="🌡️ TEMPERATURE",
                                 fill='#00ffff', font=('Arial', 8, 'bold'))
 
         y_center += 20
 
         # Coolant temp with bar
         coolant_val = float(self.current_data.get('COOLANT_TEMP', {}).get('value', '0').split()[0])
-        self.draw_temp_bar(170, y_center, "COOL", coolant_val, 150, 140)
+        self.draw_temp_bar(170, y_center, "COOL", coolant_val, 150, 130)
 
         y_center += 30
 
         # Intake temp with bar
         intake_val = float(self.current_data.get('INTAKE_TEMP', {}).get('value', '0').split()[0])
-        self.draw_temp_bar(170, y_center, "INTK", intake_val, 80, 140)
+        self.draw_temp_bar(170, y_center, "INTK", intake_val, 80, 130)
 
         y_center += 40
 
@@ -151,7 +153,7 @@ class OBD2Dashboard:
         # === RIGHT COLUMN ===
         # Voltage section
         y_right = 30
-        self.canvas.create_text(400, y_right, text="VOLTAGE",
+        self.canvas.create_text(400, y_right, text="VOLTAGE ⚡️",
                                 fill='#00ffff', font=('Arial', 8, 'bold'))
 
         y_right += 20
@@ -160,7 +162,7 @@ class OBD2Dashboard:
         control_val = float(control_voltage.split()[0])
 
         self.canvas.create_text(340, y_right, text="CTRL", fill='#888888', font=('Arial', 7))
-        self.draw_voltage_bar(360, y_right, control_val, 16, 90)
+        self.draw_voltage_bar(360, y_right, control_val, 16, 80)
 
         y_right += 25
 
@@ -168,7 +170,7 @@ class OBD2Dashboard:
         elm_val = float(elm_voltage.split()[0])
 
         self.canvas.create_text(340, y_right, text="ELM", fill='#888888', font=('Arial', 7))
-        self.draw_voltage_bar(360, y_right, elm_val, 16, 90)
+        self.draw_voltage_bar(360, y_right, elm_val, 16, 80)
 
         # Barometric pressure
         y_right += 35
@@ -282,7 +284,7 @@ class OBD2Dashboard:
                                          fill=color, outline='')
 
         # Value
-        self.canvas.create_text(x + bar_width, y, text=f"{int(value)}°",
+        self.canvas.create_text(x + bar_width + 10, y, text=f"{int(value)}°",
                                 fill=color, font=('Arial', 8, 'bold'))
 
     def draw_afr_bar(self, x, y, ratio_val, bar_width):
