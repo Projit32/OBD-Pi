@@ -14,6 +14,7 @@ class OBDDataReader:
         self.running = False
         self.current_value = {}
         self.obd_delay = 0.06
+        self.start_time = time.time()
         # Load commands from JSON
         with open("running.json", "r") as file:
             commands_file = json.load(file)
@@ -69,6 +70,12 @@ class OBDDataReader:
 
     def fetch_data(self):
         """Fetch sensor data and put it in the callback"""
+
+        time_delta = round(float(time.time() - self.start_time), 1)
+        self.current_value["RUN_TIME"] = {
+            "value": f"{time_delta} second",
+            "unit": "second"
+        }
 
         for cmd in self.all_commands:
             try:
