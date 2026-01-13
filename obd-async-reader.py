@@ -2,7 +2,7 @@ import obd
 import json
 import time
 
-with open("./commands.json", "r") as file:
+with open("running.json", "r") as file:
     commands_file = json.load(file)
 
 connection = obd.Async(delay_cmds=0.05)

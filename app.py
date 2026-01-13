@@ -3,6 +3,7 @@ import json
 import threading
 import time
 import obd
+from datetime import datetime, timedelta
 from ui.mid_res_app import OBD2Dashboard
 
 class OBDDataReader:
@@ -12,11 +13,29 @@ class OBDDataReader:
         self.connection = None
         self.running = False
         self.current_value = {}
-
+        self.obd_delay = 0.06
         # Load commands from JSON
-        with open("./commands.json", "r") as file:
+        with open("running.json", "r") as file:
             commands_file = json.load(file)
-            self.commands = [obd.commands[key] for key in commands_file]
+            self.running_commands = [obd.commands[key] for key in commands_file]
+
+        with open("occasional.json", "r") as file:
+            commands_file = json.load(file)
+            self.occasional_commands = [obd.commands[key] for key in commands_file]
+
+        self.all_commands = self.occasional_commands + self.running_commands
+
+    def watch_running_commands(self):
+        for cmd in self.running_commands:
+            self.connection.watch(cmd)
+
+    def watch_occasional_commands(self):
+        for cmd in self.occasional_commands:
+            self.connection.watch(cmd)
+
+    def unwatch_occasional_commands(self):
+        for cmd in self.occasional_commands:
+            self.connection.unwatch(cmd)
 
     def connect(self):
         """Establish connection to OBD interface"""
@@ -34,7 +53,7 @@ class OBDDataReader:
 
                 self.connection.close()
 
-                self.connection = obd.Async(delay_cmds=0.05)
+                self.connection = obd.Async(delay_cmds=self.obd_delay)
                 if self.connection.is_connected():
                     print(f"Async Connection established with: {self.connection.port_name()}")
                     return True
@@ -51,7 +70,7 @@ class OBDDataReader:
     def fetch_data(self):
         """Fetch sensor data and put it in the callback"""
 
-        for cmd in self.commands:
+        for cmd in self.all_commands:
             try:
                 response = self.connection.query(cmd)
                 if not response.is_null() and response.value is not None:
@@ -60,27 +79,42 @@ class OBDDataReader:
                         "unit": str(response.value.units) if hasattr(response.value, 'units') else "N/A"
                     }
                     self.callback(self.current_value)
-                    time.sleep(0.11)
+                    time.sleep(self.obd_delay)
             except Exception as e:
+                print("ERROR fetching sensor data ",e)
                 pass  # Silently skip errors for individual sensors
 
 
     def run(self):
         """Main loop for reading OBD data"""
         # Watch all commands
-        for cmd in self.commands:
-            self.connection.watch(cmd)
+        self.watch_running_commands()
+        self.watch_occasional_commands()
 
         self.connection.start()
 
+        initial_sleep = (len(self.occasional_commands)+len(self.running_commands))*self.obd_delay
         # Wait for first full cycle
-        print("Commands has been loaded to be watched. Waiting for a full cycle to complete... [2 sec]")
-        time.sleep(2)
+        print(f"Commands has been loaded to be watched. Waiting for a full cycle to complete... [{initial_sleep} sec]")
+        time.sleep(initial_sleep)
+        self.unwatch_occasional_commands()
         self.running = True
+
+        is_occasional_on = False
+        occasional_end_time = datetime.now()
 
         while self.running:
             try:
                 self.fetch_data()
+                if not is_occasional_on and datetime.now().second % 20 == 0:
+                    is_occasional_on = True
+                    self.watch_occasional_commands()
+                    occasional_end_time = datetime.now() + timedelta(seconds=(self.obd_delay*len(self.all_commands))+1)
+
+                if is_occasional_on and datetime.now() >= occasional_end_time:
+                    self.unwatch_occasional_commands()
+                    is_occasional_on = False
+
             except Exception as e:
                 print(f"Error reading data: {e}")
                 time.sleep(1)
@@ -91,6 +125,7 @@ class OBDDataReader:
         if self.connection and self.connection.is_connected():
             self.connection.close()
             print("OBD connection closed")
+
 
 class IntegratedDashboard:
     def __init__(self):
@@ -129,6 +164,7 @@ class IntegratedDashboard:
             self.start_reader_thread()
 
             # Start Tkinter main loop
+            self.root.update_idletasks()  # Force window to fully render
             self.root.mainloop()
         else:
             print("Failed to connect to OBD interface. Exiting...")

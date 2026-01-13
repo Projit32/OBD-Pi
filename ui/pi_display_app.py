@@ -387,7 +387,7 @@ if __name__ == "__main__":
    # Example OBD reader thread function
    def obd_reader_thread(dashboard):
        """Simulated OBD reader that sends data to dashboard"""
-       with open("./new-sample.json", "r") as logs:
+       with open("./sample.json", "r") as logs:
            data = json.load(logs)
        count = 0
        while True:
