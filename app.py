@@ -4,7 +4,7 @@ import threading
 import time
 import obd
 from datetime import datetime, timedelta
-from ui.mid_res_app import OBD2Dashboard
+from ui.pi_display_app import OBD2Dashboard
 
 class OBDDataReader:
     def __init__(self, callback):
@@ -31,12 +31,16 @@ class OBDDataReader:
             self.connection.watch(cmd)
 
     def watch_occasional_commands(self):
+        self.connection.stop()
         for cmd in self.occasional_commands:
             self.connection.watch(cmd)
+        self.connection.start()
 
     def unwatch_occasional_commands(self):
+        self.connection.stop()
         for cmd in self.occasional_commands:
             self.connection.unwatch(cmd)
+        self.connection.start()
 
     def connect(self):
         """Establish connection to OBD interface"""
