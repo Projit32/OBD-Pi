@@ -13,7 +13,7 @@ class OBDDataReader:
         self.connection = None
         self.running = False
         self.current_value = {}
-        self.obd_delay = 0.06
+        self.obd_delay = 0.07
         self.start_time = time.time()
         # Load commands from JSON
         with open("running.json", "r") as file:
@@ -34,12 +34,16 @@ class OBDDataReader:
         self.connection.stop()
         for cmd in self.occasional_commands:
             self.connection.watch(cmd)
+
+        print("Watch ||  Total commands : ", self.connection.__commands, " (", len(self.connection.__commands),")")
         self.connection.start()
 
     def unwatch_occasional_commands(self):
         self.connection.stop()
         for cmd in self.occasional_commands:
             self.connection.unwatch(cmd)
+        print("Unwatch || Total commands : ", self.connection.__commands, " (", len(self.connection.__commands),")")
+
         self.connection.start()
 
     def connect(self):
@@ -104,9 +108,9 @@ class OBDDataReader:
 
         self.connection.start()
 
-        initial_sleep = (len(self.occasional_commands)+len(self.running_commands))*self.obd_delay
+        initial_sleep = 2*(len(self.occasional_commands)+len(self.running_commands))*self.obd_delay
         # Wait for first full cycle
-        print(f"Commands has been loaded to be watched. Waiting for a full cycle to complete... [{initial_sleep} sec]")
+        print(f"Commands has been loaded to be watched. Waiting for 2 full cycle to complete... [{initial_sleep} sec]")
         time.sleep(initial_sleep)
         self.unwatch_occasional_commands()
         self.running = True
@@ -119,12 +123,15 @@ class OBDDataReader:
                 self.fetch_data()
                 if not is_occasional_on and datetime.now().second % 20 == 0:
                     is_occasional_on = True
+                    print("Turning occasional on :")
                     self.watch_occasional_commands()
                     occasional_end_time = datetime.now() + timedelta(seconds=(self.obd_delay*len(self.all_commands))+1)
+                    print("Stop Time for occasional ", occasional_end_time)
 
                 if is_occasional_on and datetime.now() >= occasional_end_time:
                     self.unwatch_occasional_commands()
                     is_occasional_on = False
+                    print("Turning off occasional")
 
             except Exception as e:
                 print(f"Error reading data: {e}")
