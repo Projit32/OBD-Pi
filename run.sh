@@ -1,5 +1,6 @@
 #!/bin/bash
 
+source config.env
 rfkill unblock bluetooth
 bluetoothctl -- power on
 source $WORK_DIR/obd-env/bin/activate

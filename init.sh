@@ -14,5 +14,5 @@ git clone https://github.com/Projit32/OBD-Pi.git
 pip install -r ./OBD-Pi/requirements.txt
 
 cd OBD-Pi
-touch runtime.env
-echo "WORK_DIR=$WORK_DIR/OBD-Pi" >> runtime.env
+touch config.env
+#echo "WORK_DIR=$WORK_DIR" >> config.env
