@@ -93,6 +93,7 @@ class OBDDataReader:
                         "value": str(response.value),
                         "unit": str(response.value.units) if hasattr(response.value, 'units') else "N/A"
                     }
+                    print(cmd.name,response.value)
                     self.callback(self.current_value)
                     time.sleep(self.obd_delay)
             except Exception as e:
@@ -125,7 +126,7 @@ class OBDDataReader:
                     is_occasional_on = True
                     print("Turning occasional on :")
                     self.watch_occasional_commands()
-                    occasional_end_time = datetime.now() + timedelta(seconds=(self.obd_delay*len(self.all_commands))+1)
+                    occasional_end_time = datetime.now() + timedelta(seconds=(self.obd_delay*len(self.all_commands))*2)
                     print("Stop Time for occasional ", occasional_end_time)
 
                 if is_occasional_on and datetime.now() >= occasional_end_time:
