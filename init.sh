@@ -3,16 +3,13 @@
 apt-get -y update
 apt-get -y upgrade
 apt-get -y pwdinstall bluetooth bluez
+
+git clone https://github.com/Projit32/OBD-Pi.git obd-pi
+cd obd-pi
 WORK_DIR=$(pwd)
 echo $WORK_DIR
-mkdir -p $WORK_DIR/obd
-cd $WORK_DIR/obd
-pwd
-python -m venv obd-env
-source obd-env/bin/activate
-git clone https://github.com/Projit32/OBD-Pi.git
-pip install -r ./OBD-Pi/requirements.txt
-
-cd OBD-Pi
-touch config.env
+python -m venv $WORK_DIR/obd-env
+source $WORK_DIR/obd-env/bin/activate
+pip install -r ./requirements.txt
+#touch config.env
 #echo "WORK_DIR=$WORK_DIR" >> config.env
